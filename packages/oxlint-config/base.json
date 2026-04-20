@@ -1,0 +1,4 @@
+{
+  "ignorePatterns": ["dist/**"],
+  "plugins": ["eslint", "typescript", "import", "oxc", "unicorn"]
+}

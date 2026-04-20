@@ -1,0 +1,37 @@
+{
+  "name": "enotas",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "format": "oxfmt --check",
+    "format:fix": "oxfmt .",
+    "check-types": "turbo run check-types",
+    "generate": "turbo generate",
+    "package:add": "turbo generate package",
+    "db:generate": "pnpm --filter @repo/db db:generate",
+    "db:migrate": "pnpm --filter @repo/db db:migrate",
+    "db:push": "pnpm --filter @repo/db db:push",
+    "db:studio": "pnpm --filter @repo/db db:studio",
+    "db:start": "pnpm --filter @repo/db db:start",
+    "db:seed": "pnpm --filter @repo/db db:seed",
+    "db:reset": "pnpm --filter @repo/db db:reset",
+    "auth:generate": "pnpm --filter @repo/auth generate:schema",
+    "ui:gen": "pnpm --filter @repo/ui gen",
+    "ui:build": "pnpm --filter @repo/ui build"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^2.9.6",
+    "@types/node": "^25.6.0",
+    "oxfmt": "^0.45.0",
+    "oxlint": "^1.60.0",
+    "turbo": "^2.9.6",
+    "typescript": "^6.0.2"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.33.0"
+}

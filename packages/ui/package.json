@@ -1,0 +1,51 @@
+{
+  "name": "@repo/ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./globals.css": "./src/styles/globals.css",
+    "./lib/utils": {
+      "types": "./dist/lib/utils.d.ts",
+      "default": "./dist/lib/utils.js"
+    },
+    "./components/*": {
+      "types": "./dist/components/*.d.ts",
+      "default": "./dist/components/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "check-types": "tsc --noEmit",
+    "lint": "oxlint",
+    "gen": "pnpm dlx shadcn@latest add"
+  },
+  "devDependencies": {
+    "@repo/oxlint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "oxlint": "^1.60.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "shadcn": "^4.3.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^6.0.2"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "radix-ui": "^1.4.3",
+    "tailwind-merge": "^3.3.0",
+    "lucide-react": "^1.8.0"
+  }
+}
