@@ -17,7 +17,7 @@ export function PageHeader({
 	description,
 	eyebrow,
 	actions,
-	titleClassName = "text-3xl font-bold tracking-tight text-curator-primary",
+	titleClassName = "text-3xl font-bold tracking-tight text-curator-on-background",
 	descriptionClassName,
 	className = "",
 }: PageHeaderProps) {
@@ -29,17 +29,20 @@ export function PageHeader({
 				className,
 			)}
 		>
-			<div>
-				{eyebrow  && (
-					<span className="mb-2 block text-xs font-medium uppercase tracking-wider text-curator-primary">
-						{eyebrow}
-					</span>
+			<div className="max-w-2xl">
+				{eyebrow && (
+					<div className="mb-3 flex items-center gap-2">
+						<span className="h-px w-4 bg-curator-primary/40" />
+						<span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-curator-primary">
+							{eyebrow}
+						</span>
+					</div>
 				)}
 				<h2 className={titleClassName}>{title}</h2>
-				{description  && (
+				{description && (
 					<CardDescription
 						className={cn(
-							"mt-1 text-curator-on-surface-variant",
+							"mt-2 text-sm leading-relaxed text-curator-on-surface-variant/80",
 							descriptionClassName,
 						)}
 					>
@@ -47,7 +50,7 @@ export function PageHeader({
 					</CardDescription>
 				)}
 			</div>
-			{actions  && (
+			{actions && (
 				<div className="flex flex-wrap gap-3">{actions}</div>
 			)}
 		</div>

@@ -14,7 +14,7 @@ function SignInPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { redirect } = useSearch({ strict: false }) as { redirect?: string };
+  const { redirect } = useSearch({ strict: false });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

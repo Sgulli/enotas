@@ -1,11 +1,13 @@
+import { useMemo, useCallback } from "react";
 import type { SelectOption } from "../../../lib/types.js";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/components/select";
+  Combobox,
+  ComboboxInput,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxItem,
+  ComboboxList,
+} from "@repo/ui/components/combobox";
 
 export interface SelectInputProps {
   options: SelectOption[];
@@ -24,27 +26,54 @@ export function SelectInput({
   placeholder = "Select...",
   errorText,
 }: SelectInputProps) {
+  const selectableOptions = useMemo(
+    () => options.filter((o) => !o.disabled),
+    [options],
+  );
+
+  const selectedOption = useMemo(
+    () => selectableOptions.find((o) => o.value === value) ?? null,
+    [selectableOptions, value],
+  );
+
+  const handleValueChange = useCallback(
+    (newValue: SelectOption | null) => {
+      onChange(newValue?.value ?? "");
+    },
+    [onChange],
+  );
+
   return (
     <div className="space-y-2">
-      <Select value={value} onValueChange={onChange} disabled={disabled}>
-        <SelectTrigger>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options
-            .filter((o) => !o.disabled)
-            .map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
+      <Combobox
+        items={selectableOptions}
+        value={selectedOption}
+        onValueChange={handleValueChange}
+        itemToStringValue={(option: SelectOption) => option.label}
+        disabled={disabled}
+      >
+        <ComboboxInput
+          placeholder={placeholder}
+          aria-invalid={!!errorText || undefined}
+          showTrigger
+          showClear={!!selectedOption}
+        />
+        <ComboboxContent side="bottom" align="start">
+          <ComboboxEmpty>No items found.</ComboboxEmpty>
+          <ComboboxList>
+            {(option: SelectOption) => (
+              <ComboboxItem key={option.value} value={option.label}>
+                <span>{option.label}</span>
                 {option.description && (
                   <span className="ml-2 text-xs text-muted-foreground">
                     {option.description}
                   </span>
                 )}
-              </SelectItem>
-            ))}
-        </SelectContent>
-      </Select>
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
       {errorText && <p className="text-sm text-destructive">{errorText}</p>}
     </div>
   );

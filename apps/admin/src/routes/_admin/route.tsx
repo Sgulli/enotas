@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_admin")({
 		if (isAuthError(error)) {
 			throw redirect({
 				to: "/signin",
-				search: { redirect: window.location.href },
+				search: { redirect: globalThis.location.href },
 			});
 		}
 	},
@@ -32,16 +32,17 @@ export const Route = createFileRoute("/_admin")({
 
 function AdminLayout() {
 	const navigate = useNavigate();
-	const { data: session } = useSession();
+	const { data: session, isPending } = useSession();
 
 	useEffect(() => {
-		if (session === null) {
+		if (!isPending && !session) {
 			navigate({
 				to: "/signin",
-				search: { redirect: window.location.href },
+				search: { redirect: globalThis.location.href },
+				replace: true,
 			});
 		}
-	}, [session, navigate]);
+	}, [session, isPending, navigate]);
 	return (
 		<TooltipProvider delayDuration={0}>
 			<SidebarProvider className="h-[100dvh] min-h-0 font-curator antialiased">

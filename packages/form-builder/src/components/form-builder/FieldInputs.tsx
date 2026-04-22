@@ -1,26 +1,16 @@
 "use client";
 
-import type { FieldDefinition, SelectOption } from "../../lib/types.js";
+import type { FieldDefinition } from "../../lib/types.js";
 import { RichTextEditor } from "./RichTextEditor.js";
 import { format } from "date-fns";
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
-import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
-import { createPortal } from "react-dom";
 import {
   Input
 } from "@repo/ui/components/input";
 import { Textarea } from "@repo/ui/components/textarea";
 import { Switch } from "@repo/ui/components/switch";
 import { Slider } from "@repo/ui/components/slider";
-import { Badge } from "@repo/ui/components/badge";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/components/select";
+import { SelectInput } from "./fields/SelectInput.js";
+import { MultiSelectInput } from "./fields/MultiSelectInput.js";
 
 export interface FieldInputsProps {
   field: FieldDefinition;
@@ -226,6 +216,7 @@ export function FieldInputs({
           onChange={onChange}
           disabled={disabled || field.disabled}
           placeholder={field.placeholder}
+          maxItems={field.maxItems}
           errorText={errorText}
         />
       );
@@ -265,192 +256,4 @@ export function FieldInputs({
     default:
       return null;
   }
-}
-
-interface SelectInputProps {
-  options: SelectOption[];
-  value?: string;
-  onChange: (value: unknown) => void;
-  disabled?: boolean;
-  placeholder?: string;
-  errorText?: string;
-}
-
-function SelectInput({
-  options,
-  value,
-  onChange,
-  disabled,
-  placeholder = "Select...",
-  errorText,
-}: SelectInputProps) {
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const updatePosition = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    setDropdownStyle({
-      position: "fixed",
-      top: rect.bottom + 4,
-      left: rect.left,
-      width: rect.width,
-      zIndex: 99999,
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    if (open) {
-      updatePosition();
-      const onScroll = () => updatePosition();
-      window.addEventListener("scroll", onScroll, true);
-      window.addEventListener("resize", onScroll);
-      return () => {
-        window.removeEventListener("scroll", onScroll, true);
-        window.removeEventListener("resize", onScroll);
-      };
-    }
-  }, [open, updatePosition]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (
-        triggerRef.current?.contains(e.target as Node) ||
-        dropdownRef.current?.contains(e.target as Node)
-      ) {
-        return;
-      }
-      setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  const selected = options.find((o) => o.value === value);
-
-  return (
-    <div className="space-y-2">
-      <button
-        ref={triggerRef}
-        type="button"
-        disabled={disabled}
-        onClick={() => !disabled && setOpen(!open)}
-        className="flex h-10 w-full items-center justify-between rounded-lg border border-curator-outline-variant/30 bg-curator-surface-container-lowest px-3 py-2 text-sm text-curator-on-surface ring-offset-background transition-colors hover:bg-curator-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-curator-primary/50 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <span className={selected ? "" : "text-curator-on-surface-variant/60"}>
-          {selected?.label ?? placeholder}
-        </span>
-        <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-      </button>
-
-      {open &&
-        createPortal(
-          <div
-            ref={dropdownRef}
-            style={dropdownStyle}
-            className="overflow-hidden rounded-lg border border-curator-outline-variant/20 bg-curator-surface-container-lowest py-1 shadow-lg"
-          >
-            {options
-              .filter((o) => !o.disabled)
-              .map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => {
-                    onChange(option.value);
-                    setOpen(false);
-                  }}
-                  className="flex w-full items-center px-3 py-2 text-left text-sm text-curator-on-surface transition-colors hover:bg-curator-surface-container"
-                >
-                  <span className="flex-1">{option.label}</span>
-                  {option.value === value && (
-                    <CheckIcon className="ml-2 h-4 w-4 shrink-0 text-curator-primary" />
-                  )}
-                </button>
-              ))}
-          </div>,
-          document.body,
-        )}
-      {errorText && <p className="text-sm text-curator-error">{errorText}</p>}
-    </div>
-  );
-}
-
-interface MultiSelectInputProps {
-  options: SelectOption[];
-  value: string[];
-  onChange: (value: unknown) => void;
-  disabled?: boolean;
-  placeholder?: string;
-  errorText?: string;
-}
-
-function MultiSelectInput({
-  options,
-  value,
-  onChange,
-  disabled,
-  placeholder = "Select...",
-  errorText,
-}: MultiSelectInputProps) {
-  const [open, setOpen] = useState(false);
-  const selectedOptions = options.filter((o) => value.includes(o.value));
-
-  const toggleValue = (optionValue: string) => {
-    const newValue = value.includes(optionValue)
-      ? value.filter((v) => v !== optionValue)
-      : [...value, optionValue];
-    onChange(newValue);
-  };
-
-  return (
-    <div className="space-y-2">
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => !disabled && setOpen(!open)}
-          disabled={disabled}
-          className="flex min-h-8 w-full items-center justify-between rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <div className="flex flex-wrap items-center gap-1">
-            {selectedOptions.length === 0 ? (
-              <span className="text-muted-foreground">{placeholder}</span>
-            ) : (
-              selectedOptions.map((opt) => (
-                <Badge key={opt.value} variant="secondary">
-                  {opt.label}
-                </Badge>
-              ))
-            )}
-          </div>
-          <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </button>
-        {open && (
-          <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border bg-popover p-1 text-popover-foreground shadow-md">
-            {options
-              .filter((o) => !o.disabled)
-              .map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => toggleValue(option.value)}
-                  className="relative flex w-full cursor-pointer select-none items-center rounded-md px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-                >
-                  <span className="mr-2 flex h-4 w-4 items-center justify-center">
-                    {value.includes(option.value) && (
-                      <CheckIcon className="h-4 w-4" />
-                    )}
-                  </span>
-                  {option.label}
-                </button>
-              ))}
-          </div>
-        )}
-      </div>
-      {errorText && <p className="text-sm text-destructive">{errorText}</p>}
-    </div>
-  );
 }
