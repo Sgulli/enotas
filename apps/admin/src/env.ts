@@ -12,6 +12,7 @@ export const env = createEnv({
   client: {
     VITE_APP_TITLE: z.string().min(1).optional(),
     VITE_BETTER_AUTH_URL: z.string().optional(),
+    VITE_APP_NAME: z.string().min(1).optional(),
   },
 
   runtimeEnv: import.meta.env,

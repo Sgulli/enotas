@@ -1,9 +1,12 @@
-import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+import { Outlet, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/sidebar";
 import { TooltipProvider } from "@repo/ui/components/tooltip";
 import { getSession } from "#/server/auth";
 import { AdminSidebar } from "#/components/admin/AdminSidebar";
 import { AdminTopbar } from "#/components/admin/AdminTopbar";
+import { isAuthError } from "#/lib/errors";
+import { useSession } from "#/lib/auth";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_admin")({
 	beforeLoad: async ({ location }) => {
@@ -16,10 +19,29 @@ export const Route = createFileRoute("/_admin")({
 		}
 		return { user: session.user };
 	},
+	onError: ({ error }) => {
+		if (isAuthError(error)) {
+			throw redirect({
+				to: "/signin",
+				search: { redirect: window.location.href },
+			});
+		}
+	},
 	component: AdminLayout,
 });
 
 function AdminLayout() {
+	const navigate = useNavigate();
+	const { data: session } = useSession();
+
+	useEffect(() => {
+		if (session === null) {
+			navigate({
+				to: "/signin",
+				search: { redirect: window.location.href },
+			});
+		}
+	}, [session, navigate]);
 	return (
 		<TooltipProvider delayDuration={0}>
 			<SidebarProvider className="h-[100dvh] min-h-0 font-curator antialiased">
