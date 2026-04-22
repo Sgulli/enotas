@@ -63,7 +63,12 @@ function applyFieldTypeOverride(
   switch (ui.fieldType) {
     case "textarea": {
       const src = original as TextareaField;
-      return { ...base, type: "textarea", rows: ui.rows, validation: src.validation };
+      return {
+        ...base,
+        type: "textarea",
+        rows: ui.rows,
+        validation: src.validation,
+      };
     }
     case "richtext":
       return { ...base, type: "richtext", toolbar: ui.toolbar };

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getPrisma, Prisma } from "@repo/db";
 import * as z from "zod";
 import { orNull } from "@repo/shared";
+import { paginationSchema } from "#/lib/pagination";
 
 function slugify(name: string): string {
   const base = name
@@ -94,6 +95,10 @@ const getProductByIdInputSchema = z.object({
   id: z.string().min(1),
 });
 
+const getProductsSchema = paginationSchema.extend({
+  categoryId: z.string().optional(),
+});
+
 function toDecimal(
   value: string | number | null | undefined,
 ): Prisma.Decimal | null {
@@ -105,16 +110,32 @@ function toDecimalRequired(value: string | number): Prisma.Decimal {
   return new Prisma.Decimal(String(value));
 }
 
-export const getProducts = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const prisma = getPrisma();
-    const products = await prisma.products.findMany({
-      orderBy: { createdAt: "desc" },
-      include: { category: true },
-    });
-    return products.map((p) => mapProductRow(p));
-  },
-);
+export const getProducts = createServerFn({ method: "GET" })
+  .inputValidator(getProductsSchema)
+  .handler(async (ctx) => {
+    const { page, pageSize, categoryId } = ctx.data;
+    const skip = (page - 1) * pageSize;
+
+    const where = categoryId ? { categoryId } : {};
+
+    const [products, total] = await Promise.all([
+      getPrisma().products.findMany({
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: "desc" },
+        where,
+        include: { category: true },
+      }),
+      getPrisma().products.count({ where }),
+    ]);
+
+    return {
+      products: products.map((p) => mapProductRow(p)),
+      total,
+      page,
+      pageSize,
+    };
+  });
 
 export const getProductCount = createServerFn({ method: "GET" }).handler(
   async () => {
@@ -196,6 +217,14 @@ export const updateProduct = createServerFn({ method: "POST" })
       include: { category: true },
     });
     return mapProductRow(updated);
+  });
+
+export const deleteProduct = createServerFn({ method: "POST" })
+  .inputValidator(z.object({ id: z.string().min(1) }))
+  .handler(async (ctx) => {
+    const prisma = getPrisma();
+    await prisma.products.delete({ where: { id: ctx.data.id } });
+    return { success: true };
   });
 
 export type SerializedProduct = ReturnType<typeof mapProductRow>;

@@ -130,44 +130,44 @@ export function ContactForm() {
 
 ## Field Types
 
-| Type | Description | Validation Options |
-|------|-------------|-------------------|
-| `string` | Basic text input | `min`, `max`, `pattern` |
-| `email` | Email with format validation | `min`, `max`, `pattern` |
-| `url` | URL with format validation | - |
-| `phone` | Phone number input | - |
-| `number` | Numeric input | `min`, `max`, `integer`, `step` |
-| `slider` | Range slider | `min`, `max`, `step` |
-| `boolean` | Checkbox | - |
-| `boolean` (variant: `switch`) | Toggle switch | - |
-| `date` | Date picker | `min`, `max` (Date objects) |
-| `datetime` | Date and time picker | `min`, `max` (Date objects) |
-| `textarea` | Multi-line text | `min`, `max`, `pattern`, `rows` |
-| `select` | Dropdown single select | `options: SelectOption[]` |
-| `multiselect` | Multi-select with badges | `options`, `maxItems` |
-| `richtext` | WYSIWYG editor | `toolbar: RichTextToolbarOption[]` |
-| `color` | Color picker | `presets: string[]` |
-| `file` | File upload | `accept`, `maxSize` |
+| Type                          | Description                  | Validation Options                 |
+| ----------------------------- | ---------------------------- | ---------------------------------- |
+| `string`                      | Basic text input             | `min`, `max`, `pattern`            |
+| `email`                       | Email with format validation | `min`, `max`, `pattern`            |
+| `url`                         | URL with format validation   | -                                  |
+| `phone`                       | Phone number input           | -                                  |
+| `number`                      | Numeric input                | `min`, `max`, `integer`, `step`    |
+| `slider`                      | Range slider                 | `min`, `max`, `step`               |
+| `boolean`                     | Checkbox                     | -                                  |
+| `boolean` (variant: `switch`) | Toggle switch                | -                                  |
+| `date`                        | Date picker                  | `min`, `max` (Date objects)        |
+| `datetime`                    | Date and time picker         | `min`, `max` (Date objects)        |
+| `textarea`                    | Multi-line text              | `min`, `max`, `pattern`, `rows`    |
+| `select`                      | Dropdown single select       | `options: SelectOption[]`          |
+| `multiselect`                 | Multi-select with badges     | `options`, `maxItems`              |
+| `richtext`                    | WYSIWYG editor               | `toolbar: RichTextToolbarOption[]` |
+| `color`                       | Color picker                 | `presets: string[]`                |
+| `file`                        | File upload                  | `accept`, `maxSize`                |
 
-## JSON Schema Extensions (x-* keys)
+## JSON Schema Extensions (x-\* keys)
 
 Standard JSON Schema keywords drive validation. Use `x-*` extension keys for UI customization:
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `x-field-type` | `string` | Override inferred type: `"textarea"`, `"richtext"`, `"slider"`, `"color"`, `"phone"`, `"switch"`, `"file"` |
-| `x-placeholder` | `string` | Input placeholder text |
-| `x-options` | `SelectOption[]` | Custom option list for select/multiselect |
-| `x-toolbar` | `RichTextToolbarOption[]` | Richtext toolbar buttons |
-| `x-presets` | `string[]` | Color picker preset swatches |
-| `x-rows` | `number` | Textarea visible rows |
-| `x-step` | `number` | Number/slider step increment |
-| `x-variant` | `"checkbox" \| "switch"` | Boolean field render variant |
-| `x-class` | `string` | CSS class on field wrapper (e.g., `"sm:col-span-2"`) |
-| `x-disabled` | `boolean` | Disable the field in the UI |
-| `x-hidden` | `boolean` | Hide from UI but still validate |
-| `x-layout` | `"single" \| "two-column" \| "three-column"` | Grid layout (top-level object only) |
-| `x-order` | `string[]` | Explicit field rendering order |
+| Key             | Type                                         | Description                                                                                                |
+| --------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `x-field-type`  | `string`                                     | Override inferred type: `"textarea"`, `"richtext"`, `"slider"`, `"color"`, `"phone"`, `"switch"`, `"file"` |
+| `x-placeholder` | `string`                                     | Input placeholder text                                                                                     |
+| `x-options`     | `SelectOption[]`                             | Custom option list for select/multiselect                                                                  |
+| `x-toolbar`     | `RichTextToolbarOption[]`                    | Richtext toolbar buttons                                                                                   |
+| `x-presets`     | `string[]`                                   | Color picker preset swatches                                                                               |
+| `x-rows`        | `number`                                     | Textarea visible rows                                                                                      |
+| `x-step`        | `number`                                     | Number/slider step increment                                                                               |
+| `x-variant`     | `"checkbox" \| "switch"`                     | Boolean field render variant                                                                               |
+| `x-class`       | `string`                                     | CSS class on field wrapper (e.g., `"sm:col-span-2"`)                                                       |
+| `x-disabled`    | `boolean`                                    | Disable the field in the UI                                                                                |
+| `x-hidden`      | `boolean`                                    | Hide from UI but still validate                                                                            |
+| `x-layout`      | `"single" \| "two-column" \| "three-column"` | Grid layout (top-level object only)                                                                        |
+| `x-order`       | `string[]`                                   | Explicit field rendering order                                                                             |
 
 ### JSON Schema Example with Extensions
 
@@ -246,7 +246,7 @@ type FormBuilderProps =
       schema: FormSchema;
       jsonSchema?: never;
     }
-  | {
+  | ({
       jsonSchema: JsonSchema;
       schema?: never;
     } & {
@@ -258,21 +258,21 @@ type FormBuilderProps =
       disabled?: boolean;
       className?: string;
       footer?: React.ReactNode;
-    };
+    });
 ```
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `schema` | `FormSchema` | - | Native form schema (mutually exclusive with `jsonSchema`) |
-| `jsonSchema` | `JsonSchema` | - | JSON Schema draft-07 (mutually exclusive with `schema`) |
-| `onSubmit` | `(values) => void \| Promise<void>` | - | Form submission handler |
-| `onCancel` | `() => void` | - | Cancel button handler (shows cancel button if provided) |
-| `defaultValues` | `Partial<Record<string, unknown>>` | - | Pre-fill form values |
-| `submitLabel` | `string` | `"Submit"` | Submit button text |
-| `cancelLabel` | `string` | `"Cancel"` | Cancel button text |
-| `disabled` | `boolean` | `false` | Disable all form fields |
-| `className` | `string` | - | Additional CSS classes on form wrapper |
-| `footer` | `React.ReactNode` | - | Custom footer content (replaces default buttons) |
+| Prop            | Type                                | Default    | Description                                               |
+| --------------- | ----------------------------------- | ---------- | --------------------------------------------------------- |
+| `schema`        | `FormSchema`                        | -          | Native form schema (mutually exclusive with `jsonSchema`) |
+| `jsonSchema`    | `JsonSchema`                        | -          | JSON Schema draft-07 (mutually exclusive with `schema`)   |
+| `onSubmit`      | `(values) => void \| Promise<void>` | -          | Form submission handler                                   |
+| `onCancel`      | `() => void`                        | -          | Cancel button handler (shows cancel button if provided)   |
+| `defaultValues` | `Partial<Record<string, unknown>>`  | -          | Pre-fill form values                                      |
+| `submitLabel`   | `string`                            | `"Submit"` | Submit button text                                        |
+| `cancelLabel`   | `string`                            | `"Cancel"` | Cancel button text                                        |
+| `disabled`      | `boolean`                           | `false`    | Disable all form fields                                   |
+| `className`     | `string`                            | -          | Additional CSS classes on form wrapper                    |
+| `footer`        | `React.ReactNode`                   | -          | Custom footer content (replaces default buttons)          |
 
 ### FieldInputs
 
@@ -402,7 +402,11 @@ const jsonSchema: JsonSchema = {
 Form values are automatically inferred from your schema:
 
 ```typescript
-import { FormBuilder, type FormSchema, type InferFormValues } from "@repo/form-builder";
+import {
+  FormBuilder,
+  type FormSchema,
+  type InferFormValues,
+} from "@repo/form-builder";
 
 const schema = {
   fields: [

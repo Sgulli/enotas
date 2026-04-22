@@ -35,7 +35,9 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: string | null;
+  emailVerified: boolean;
+  image?: string | null;
+  role?: string;
   banned: boolean | null;
   banReason?: string | null;
   banExpires: string | null;
@@ -47,7 +49,7 @@ interface UserFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user?: User | null;
-  onSubmit: (values: Record<string, unknown>) => Promise<void>;
+  onSubmit: (values: Pick<User, "name" | "email" | "role">) => Promise<void>;
 }
 
 export function UserFormModal({
@@ -76,14 +78,12 @@ export function UserFormModal({
     [user],
   );
 
-  const handleSubmit = async (values: Record<string, unknown>) => {
+  const handleSubmit = async (
+    values: Pick<User, "name" | "email" | "role">,
+  ) => {
     setIsSubmitting(true);
     try {
-      await onSubmit({
-        ...values,
-        banned: values.status === "banned",
-        banReason: values.status === "banned" ? banReason || null : null,
-      });
+      await onSubmit(values);
       onOpenChange(false);
     } finally {
       setIsSubmitting(false);
@@ -129,7 +129,9 @@ export function UserFormModal({
             },
           }}
           defaultValues={defaultValues}
-          onSubmit={handleSubmit}
+          onSubmit={(data) =>
+            handleSubmit(data as Pick<User, "name" | "email" | "role">)
+          }
           disabled={isSubmitting}
           className="space-y-5"
           onFieldChange={(name, value) => {
@@ -141,9 +143,7 @@ export function UserFormModal({
             <div className="space-y-5">
               <div
                 className={`space-y-2 overflow-hidden transition-all duration-200 ${
-                  showBanReason
-                    ? "max-h-32 opacity-100"
-                    : "max-h-0 opacity-0"
+                  showBanReason ? "max-h-32 opacity-100" : "max-h-0 opacity-0"
                 }`}
               >
                 <Label

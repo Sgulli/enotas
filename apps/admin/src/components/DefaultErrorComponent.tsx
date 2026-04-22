@@ -25,7 +25,6 @@ export function DefaultErrorComponent({ error, reset }: ErrorComponentProps) {
 
           <Link
             to="/signin"
-            search={() => ({})}
             className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-curator-primary to-curator-primary-container px-5 py-2.5 text-sm font-semibold text-curator-on-primary shadow-md transition-all hover:opacity-95 active:scale-[0.98]"
           >
             <LogIn className="h-4 w-4" />

@@ -1,11 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeaders } from "@tanstack/react-start/server";
 import { getPrisma } from "@repo/db";
 import * as z from "zod";
 import { orNull } from "@repo/shared";
+import { auth } from "@repo/auth";
+import { randomBytes } from "node:crypto";
+import { paginationSchema } from "#/lib/pagination";
+import { buildFilterQuery } from "#/lib/utils";
+
 const userSchema = z.object({
   name: z.string().min(1),
   email: z.email(),
-  role: z.string().nullable().optional(),
+  role: z.enum(["admin", "user"]),
   banned: z.boolean().nullable().optional(),
   banReason: z.string().nullable().optional(),
   banExpires: z.string().nullable().optional(),
@@ -13,21 +19,42 @@ const userSchema = z.object({
 
 const updateUserSchema = userSchema.extend({ id: z.string() }).partial();
 
+const getUsersSchema = paginationSchema.extend({
+  role: z.string().optional(),
+  sortBy: z.string().optional(),
+  sortDirection: z.enum(["asc", "desc"]).optional(),
+});
+
 export const getUsers = createServerFn({ method: "GET" })
-  .inputValidator(z.object({ role: z.string() }))
+  .inputValidator(getUsersSchema)
   .handler(async (ctx) => {
-    const prisma = getPrisma();
-    const { role } = ctx.data;
-    const users = await prisma.user.findMany({
-      where: { role },
-      orderBy: { createdAt: "desc" },
+    const { role, page, pageSize, sortBy, sortDirection } = ctx.data;
+    const offset = (page - 1) * pageSize;
+    const headers = getRequestHeaders();
+
+    const query = {
+      ...(role ? buildFilterQuery("role", "eq", role) : {}),
+      limit: pageSize,
+      offset,
+      ...(sortBy ? { sortBy, sortDirection } : {}),
+    };
+
+    const { users, total } = await auth.api.listUsers({
+      query,
+      headers,
     });
-    return users.map((u) => ({
-      ...u,
-      createdAt: u.createdAt.toISOString(),
-      updatedAt: u.updatedAt.toISOString(),
-      banExpires: orNull(u.banExpires?.toISOString()),
-    }));
+
+    return {
+      users: users.map((u) => ({
+        ...u,
+        createdAt: u.createdAt.toISOString(),
+        updatedAt: u.updatedAt.toISOString(),
+        banExpires: orNull(u.banExpires?.toISOString()),
+      })),
+      total,
+      page,
+      pageSize,
+    };
   });
 
 export const getUserCount = createServerFn({ method: "GET" })
@@ -41,36 +68,36 @@ export const getUserCount = createServerFn({ method: "GET" })
 export const createUser = createServerFn({ method: "POST" })
   .inputValidator(userSchema)
   .handler(async (ctx) => {
-    const prisma = getPrisma();
-    const { name, email, role, banned, banReason } = ctx.data;
+    const { name, email, role } = ctx.data;
+    const password = randomBytes(16).toString("hex");
+    const headers = getRequestHeaders();
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        role: role,
-        banned: banned ?? false,
-        banReason: banReason ?? null,
-      },
+    const { user } = await auth.api.createUser({
+      body: { email, password, name },
+      headers,
+    });
+
+    await auth.api.setRole({
+      body: { userId: user.id, role },
+      headers,
     });
 
     return {
       ...user,
       createdAt: user.createdAt.toISOString(),
       updatedAt: user.updatedAt.toISOString(),
-      banExpires: orNull(user.banExpires?.toISOString()),
     };
   });
 
 export const updateUser = createServerFn({ method: "POST" })
   .inputValidator(updateUserSchema)
   .handler(async (ctx) => {
-    const prisma = getPrisma();
     const { id, ...data } = ctx.data;
+    const headers = getRequestHeaders();
 
-    const user = await prisma.user.update({
-      where: { id },
-      data,
+    const user = await auth.api.adminUpdateUser({
+      body: { userId: id, data },
+      headers,
     });
 
     return {
@@ -84,7 +111,12 @@ export const updateUser = createServerFn({ method: "POST" })
 export const deleteUser = createServerFn({ method: "POST" })
   .inputValidator(updateUserSchema.pick({ id: true }))
   .handler(async (ctx) => {
-    const prisma = getPrisma();
-    await prisma.user.delete({ where: { id: ctx.data.id } });
+    const headers = getRequestHeaders();
+
+    await auth.api.removeUser({
+      body: { userId: ctx.data.id },
+      headers,
+    });
+
     return { success: true };
   });

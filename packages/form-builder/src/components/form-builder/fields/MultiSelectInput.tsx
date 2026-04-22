@@ -66,9 +66,7 @@ export function MultiSelectInput({
         <ComboboxChips aria-invalid={!!errorText || undefined}>
           <ComboboxValue>
             {comboboxValue.map((opt) => (
-              <ComboboxChip key={opt.value}>
-                {opt.label}
-              </ComboboxChip>
+              <ComboboxChip key={opt.value}>{opt.label}</ComboboxChip>
             ))}
           </ComboboxValue>
           <ComboboxChipsInput placeholder={placeholder} />

@@ -22,6 +22,10 @@
     "db:start": "prisma bootstrap",
     "db:seed": "prisma db seed"
   },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.7.0",
+    "@prisma/client": "^7.7.0"
+  },
   "devDependencies": {
     "@repo/oxlint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
@@ -32,9 +36,5 @@
     "prisma": "^7.7.0",
     "tsx": "4.21.0",
     "typescript": "^6.0.2"
-  },
-  "dependencies": {
-    "@prisma/adapter-pg": "^7.7.0",
-    "@prisma/client": "^7.7.0"
   }
 }

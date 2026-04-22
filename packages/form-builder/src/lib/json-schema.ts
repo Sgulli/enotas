@@ -87,13 +87,27 @@ export type Schema =
   | BooleanSchema
   | NullSchema;
 
-export interface ObjectSchema extends JSONSchema { type: "object" }
-export interface ArraySchema extends JSONSchema { type: "array" }
-export interface StringSchema extends JSONSchema { type: "string" }
-export interface NumberSchema extends JSONSchema { type: "number" }
-export interface IntegerSchema extends JSONSchema { type: "integer" }
-export interface BooleanSchema extends JSONSchema { type: "boolean" }
-export interface NullSchema extends JSONSchema { type: "null" }
+export interface ObjectSchema extends JSONSchema {
+  type: "object";
+}
+export interface ArraySchema extends JSONSchema {
+  type: "array";
+}
+export interface StringSchema extends JSONSchema {
+  type: "string";
+}
+export interface NumberSchema extends JSONSchema {
+  type: "number";
+}
+export interface IntegerSchema extends JSONSchema {
+  type: "integer";
+}
+export interface BooleanSchema extends JSONSchema {
+  type: "boolean";
+}
+export interface NullSchema extends JSONSchema {
+  type: "null";
+}
 
 export function JSONSchemaToFields(schema: JSONSchema): FieldDefinition[] {
   const requiredSet = new Set(schema.required ?? []);
@@ -170,7 +184,11 @@ function inferField(
         case "uri-reference":
           return { ...base, type: "url" };
         default:
-          return { ...base, type: "string", validation: stringValidation(prop) };
+          return {
+            ...base,
+            type: "string",
+            validation: stringValidation(prop),
+          };
       }
     }
 

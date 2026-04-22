@@ -1,11 +1,8 @@
 import { useState } from "react";
-import { createFileRoute, useSearch } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { authClient } from "#/lib/auth";
 
 export const Route = createFileRoute("/signin")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    redirect: (search.redirect as string) || undefined,
-  }),
   component: SignInPage,
 });
 
@@ -14,9 +11,8 @@ function SignInPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { redirect } = useSearch({ strict: false });
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -25,14 +21,13 @@ function SignInPage() {
       const result = await authClient.signIn.email({
         email,
         password,
+        callbackURL: "/",
       });
 
       if (result.error) {
         setError(result.error.message ?? "Invalid credentials");
         return;
       }
-
-      window.location.href = redirect;
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

@@ -3,9 +3,7 @@
 import type { FieldDefinition } from "../../lib/types.js";
 import { RichTextEditor } from "./RichTextEditor.js";
 import { format } from "date-fns";
-import {
-  Input
-} from "@repo/ui/components/input";
+import { Input } from "@repo/ui/components/input";
 import { Textarea } from "@repo/ui/components/textarea";
 import { Switch } from "@repo/ui/components/switch";
 import { Slider } from "@repo/ui/components/slider";
@@ -42,7 +40,9 @@ export function FieldInputs({
             placeholder={field.placeholder}
             className="h-10 border-curator-outline-variant/30 bg-curator-surface-container-lowest text-curator-on-surface placeholder:text-curator-on-surface-variant/50"
           />
-          {errorText && <p className="text-sm text-curator-error">{errorText}</p>}
+          {errorText && (
+            <p className="text-sm text-curator-error">{errorText}</p>
+          )}
         </div>
       );
 
@@ -71,7 +71,9 @@ export function FieldInputs({
             placeholder={field.placeholder}
             className="h-10 border-curator-outline-variant/30 bg-curator-surface-container-lowest text-curator-on-surface placeholder:text-curator-on-surface-variant/50"
           />
-          {errorText && <p className="text-sm text-curator-error">{errorText}</p>}
+          {errorText && (
+            <p className="text-sm text-curator-error">{errorText}</p>
+          )}
         </div>
       );
 
@@ -151,7 +153,9 @@ export function FieldInputs({
             disabled={disabled || field.disabled}
             className="h-4 w-4 rounded border-curator-outline-variant accent-curator-primary"
           />
-          {errorText && <p className="text-sm text-curator-error">{errorText}</p>}
+          {errorText && (
+            <p className="text-sm text-curator-error">{errorText}</p>
+          )}
         </div>
       );
     }

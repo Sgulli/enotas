@@ -1,12 +1,24 @@
 import { useState, useCallback } from "react";
 import { Pencil, Trash2, UserPlus } from "lucide-react";
-import { useLoaderData, useRouter } from "@tanstack/react-router";
+import {
+  useLoaderData,
+  useSearch,
+  useNavigate,
+  useRouter,
+} from "@tanstack/react-router";
 import {
   Button,
   CardContent,
   CardHeader,
   DataTable,
   useColumns,
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
 } from "@repo/ui";
 import {
   AdminSearchField,
@@ -19,15 +31,65 @@ import type { User } from "../shared/UserFormModal";
 import { createUser, updateUser, deleteUser } from "#/server/users";
 import { columnUtils } from "#/lib/table-utils";
 
+const ROLE_TABS = ["All", "Admin", "Editor", "User"] as const;
+const ROLE_MAP: Record<string, string | undefined> = {
+  All: undefined,
+  Admin: "admin",
+  Editor: "editor",
+  User: "user",
+};
+
 const thBase =
   "py-4 pl-4 pr-4 text-xs font-medium uppercase tracking-widest text-curator-on-surface-variant";
 const tdBase = "py-4 pl-4 pr-4 align-top";
 
+const VISIBLE_PAGES = 5;
+
+function getVisiblePageRange(current: number, totalPages: number) {
+  if (totalPages <= VISIBLE_PAGES) return { start: 1, end: totalPages };
+  const half = Math.floor(VISIBLE_PAGES / 2);
+  let start = Math.max(1, current - half);
+  const end = Math.min(totalPages, start + VISIBLE_PAGES - 1);
+  if (end - start + 1 < VISIBLE_PAGES)
+    start = Math.max(1, end - VISIBLE_PAGES + 1);
+  return { start, end };
+}
+
 export function UserManagementPage() {
-  const { users } = useLoaderData({ from: "/_admin/users" });
+  const { users, total, page, pageSize } = useLoaderData({
+    from: "/_admin/users",
+  });
+  const search = useSearch({ from: "/_admin/users" });
+  const navigate = useNavigate();
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const roleParam = search.role ?? "";
+  const activeTab = ROLE_TABS.findIndex(
+    (tab) => (ROLE_MAP[tab] ?? "") === roleParam,
+  );
+
+  const setPage = useCallback(
+    (p: number) => {
+      void navigate({
+        to: "/users",
+        search: (prev) => ({ ...prev, page: p }),
+      });
+    },
+    [navigate],
+  );
+
+  const setRole = useCallback(
+    (role: string | undefined) => {
+      void navigate({
+        to: "/users",
+        search: (prev) => ({ ...prev, page: 1, role }),
+      });
+    },
+    [navigate],
+  );
 
   const handleCreate = useCallback(() => {
     setEditingUser(null);
@@ -49,23 +111,17 @@ export function UserManagementPage() {
   );
 
   const handleSubmit = useCallback(
-    async (rawValues: Record<string, unknown>) => {
-      const values = rawValues as {
-        name: string;
-        email: string;
-        role: string | null;
-        banned: boolean | null;
-      };
+    async (data: Pick<User, "name" | "email" | "role">) => {
+      const { role, ...rest } = data;
       if (editingUser) {
         await updateUser({
           data: {
             id: editingUser.id,
-            ...values,
-            banReason: values.banned ? editingUser.banReason : null,
+            ...rest,
           },
         });
       } else {
-        await createUser({ data: values });
+        await createUser({ data: { ...rest, role: role as "admin" | "user" } });
       }
       router.invalidate();
     },
@@ -132,7 +188,14 @@ export function UserManagementPage() {
         description="Manage platform access, roles, and privileges across the institution."
       />
 
-      <AdminTabList tabs={["Admin", "Editors", "Customers"]} />
+      <AdminTabList
+        tabs={[...ROLE_TABS]}
+        activeIndex={activeTab === -1 ? 0 : activeTab}
+        onChange={(i) => {
+          const role = ROLE_MAP[ROLE_TABS[i]];
+          setRole(role);
+        }}
+      />
 
       <CuratorCard className="gap-0 py-0">
         <CardHeader className="border-b border-curator-outline-variant/10 px-6 py-4">
@@ -165,6 +228,95 @@ export function UserManagementPage() {
           />
         </CardContent>
       </CuratorCard>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between px-2">
+          <span className="text-xs font-medium text-curator-on-surface-variant">
+            {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)} of{" "}
+            {total}
+          </span>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => page > 1 && setPage(page - 1)}
+                  className={
+                    page <= 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+              {(() => {
+                const { start, end } = getVisiblePageRange(page, totalPages);
+                const items = [];
+                if (start > 1) {
+                  items.push(
+                    <PaginationItem key={1}>
+                      <PaginationLink
+                        onClick={() => setPage(1)}
+                        className="cursor-pointer"
+                      >
+                        1
+                      </PaginationLink>
+                    </PaginationItem>,
+                  );
+                  if (start > 2) {
+                    items.push(
+                      <PaginationItem key="start-ellipsis">
+                        <PaginationEllipsis />
+                      </PaginationItem>,
+                    );
+                  }
+                }
+                for (let p = start; p <= end; p++) {
+                  items.push(
+                    <PaginationItem key={p}>
+                      <PaginationLink
+                        isActive={p === page}
+                        onClick={() => setPage(p)}
+                        className="cursor-pointer"
+                      >
+                        {p}
+                      </PaginationLink>
+                    </PaginationItem>,
+                  );
+                }
+                if (end < totalPages) {
+                  if (end < totalPages - 1) {
+                    items.push(
+                      <PaginationItem key="end-ellipsis">
+                        <PaginationEllipsis />
+                      </PaginationItem>,
+                    );
+                  }
+                  items.push(
+                    <PaginationItem key={totalPages}>
+                      <PaginationLink
+                        onClick={() => setPage(totalPages)}
+                        className="cursor-pointer"
+                      >
+                        {totalPages}
+                      </PaginationLink>
+                    </PaginationItem>,
+                  );
+                }
+                return items;
+              })()}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => page < totalPages && setPage(page + 1)}
+                  className={
+                    page >= totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <UserFormModal
         open={modalOpen}

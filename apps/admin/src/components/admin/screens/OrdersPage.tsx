@@ -8,17 +8,25 @@ import {
   ShoppingBag,
   Wallet,
 } from "lucide-react";
-import { useLoaderData } from "@tanstack/react-router";
+import { useLoaderData, useNavigate } from "@tanstack/react-router";
 import {
   Button,
   CardContent,
   CardHeader,
   DataTable,
   useColumns,
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
 } from "@repo/ui";
 import { AdminStatCard, CuratorCard } from "#/components/admin/blocks";
 import { PageHeader } from "../shared/PageHeader";
 import { columnUtils } from "#/lib/table-utils";
+import { useCallback } from "react";
 
 const ORDER_STATUS_MAP: Record<string, string> = {
   pending: "order-pending",
@@ -48,12 +56,40 @@ const thBase =
   "px-6 py-4 text-xs font-semibold uppercase tracking-widest text-curator-on-surface-variant";
 const tdBase = "px-6 py-5";
 
+const VISIBLE_PAGES = 5;
+
+function getVisiblePageRange(current: number, totalPages: number) {
+  if (totalPages <= VISIBLE_PAGES) return { start: 1, end: totalPages };
+  const half = Math.floor(VISIBLE_PAGES / 2);
+  let start = Math.max(1, current - half);
+  const end = Math.min(totalPages, start + VISIBLE_PAGES - 1);
+  if (end - start + 1 < VISIBLE_PAGES)
+    start = Math.max(1, end - VISIBLE_PAGES + 1);
+  return { start, end };
+}
+
 export function OrdersPage() {
-  const { orders, stats } = useLoaderData({ from: "/_admin/orders" });
+  const { orders, total, page, pageSize, stats } = useLoaderData({
+    from: "/_admin/orders",
+  });
+  const navigate = useNavigate();
+
   const formattedRevenue = Number(stats.totalRevenue).toLocaleString("en-US", {
     style: "currency",
     currency: "USD",
   });
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const setPage = useCallback(
+    (p: number) => {
+      void navigate({
+        to: "/orders",
+        search: (prev) => ({ ...prev, page: p }),
+      });
+    },
+    [navigate],
+  );
 
   const columns = useColumns<OrderRow>(
     (h) => [
@@ -105,7 +141,7 @@ export function OrdersPage() {
         id: "actions",
         header: "Actions",
         cell: () => (
-          <div className="flex justify-end gap-2 opacity-0 transition group-hover:opacity-100">
+          <div className="flex justify-center gap-2">
             <Button
               type="button"
               variant="ghost"
@@ -120,6 +156,10 @@ export function OrdersPage() {
     ],
     [],
   );
+
+  const { start, end } = getVisiblePageRange(page, totalPages);
+  const firstRow = (page - 1) * pageSize + 1;
+  const lastRow = Math.min(page * pageSize, total);
 
   return (
     <div className="mx-auto max-w-6xl p-8">
@@ -139,7 +179,7 @@ export function OrdersPage() {
             </Button>
             <Button
               type="button"
-              className="bg-gradient-to-br from-curator-primary to-curator-primary-container font-semibold text-curator-on-primary shadow-[0_4px_14px_0_rgba(0,30,64,0.15)] hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,30,64,0.2)]"
+              className="bg-gradient-to-br from-curator-primary to-curator-primary-container font-semibold text-curator-on-primary shadow-[0_4px_14px_0_rgba(0,30,64,0.15)]"
             >
               <Filter />
               Filter
@@ -196,7 +236,7 @@ export function OrdersPage() {
                     className={
                       i === 0
                         ? "border-b-2 border-curator-primary pb-2 text-sm font-bold text-curator-primary"
-                        : "border-b-2 border-transparent pb-2 text-sm font-medium text-curator-on-surface-variant transition hover:text-curator-primary"
+                        : "border-b-2 border-transparent pb-2 text-sm font-medium text-curator-on-surface-variant hover:text-curator-primary"
                     }
                   >
                     {tab}
@@ -210,17 +250,98 @@ export function OrdersPage() {
           <DataTable
             columns={columns}
             data={orders}
-            enablePagination
             headRowClassName="border-curator-outline-variant/10 bg-curator-surface hover:bg-curator-surface"
             headCellClassName={() => thBase}
             bodyRowClassName="group border-curator-outline-variant/10 hover:bg-curator-surface-container-low"
             bodyCellClassName={(colId) => {
               const base = `${tdBase} text-sm`;
-              return colId === "actions" ? `${base} text-right` : base;
+              return colId === "actions" ? `${base} text-center` : base;
             }}
-            paginationClassName="border-t border-curator-outline-variant/10 bg-curator-surface-container-lowest px-4 py-4"
           />
         </CardContent>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-curator-outline-variant/10 bg-curator-surface-container-lowest px-6 py-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => page > 1 && setPage(page - 1)}
+                    className={
+                      page <= 1
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
+                </PaginationItem>
+
+                {start > 1 && (
+                  <PaginationItem>
+                    <PaginationLink
+                      onClick={() => setPage(1)}
+                      className="cursor-pointer"
+                    >
+                      1
+                    </PaginationLink>
+                  </PaginationItem>
+                )}
+
+                {start > 2 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+
+                {Array.from({ length: end - start + 1 }, (_, i) => {
+                  const p = start + i;
+                  return (
+                    <PaginationItem key={p}>
+                      <PaginationLink
+                        isActive={p === page}
+                        onClick={() => setPage(p)}
+                        className="cursor-pointer"
+                      >
+                        {p}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+
+                {end < totalPages - 1 && (
+                  <PaginationItem>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                )}
+
+                {end < totalPages && (
+                  <PaginationItem>
+                    <PaginationLink
+                      onClick={() => setPage(totalPages)}
+                      className="cursor-pointer"
+                    >
+                      {totalPages}
+                    </PaginationLink>
+                  </PaginationItem>
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => page < totalPages && setPage(page + 1)}
+                    className={
+                      page >= totalPages
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+
+            <span className="text-xs font-semibold text-curator-on-surface-variant">
+              {firstRow}–{lastRow} of {total}
+            </span>
+          </div>
+        )}
       </CuratorCard>
     </div>
   );
